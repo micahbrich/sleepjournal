@@ -10,7 +10,6 @@ const fetcher = (url: string, ...args: any) =>
 
 const Home: NextPage = () => {
   const { data, error } = useSWR("/api/sleep", fetcher);
-  const { sleep = [] } = data || {};
 
   return (
     <div>
@@ -19,7 +18,7 @@ const Home: NextPage = () => {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 p-2">
-        {sleep.map((data: SleepData, index: number) => (
+        {data?.sleep?.map((data: SleepData, index: number) => (
           <DayStats {...data} index={index} />
         ))}
       </div>

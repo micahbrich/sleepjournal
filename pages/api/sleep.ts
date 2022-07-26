@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { ApiError } from "next/dist/server/api-utils";
 import { format, startOfWeek, endOfWeek, subWeeks, subDays } from "date-fns";
+import { sortBy } from "lodash";
 
 const access_token = process.env.OURA_TOKEN;
 
@@ -15,6 +16,7 @@ const fetcher = (path: string, ...args: any) =>
   }).then((res) => res.json());
 
 interface APIResponse {
+  activity?: any;
   sleep?: SleepData[] | undefined;
   start?: string;
   end?: string;
@@ -67,9 +69,9 @@ export default async function (
   res: NextApiResponse<APIResponse>
 ) {
   try {
-    // const activity = await getActivityData();
-    const sleep = await getSleepData();
-    return res.status(200).json({ ...sleep });
+    const { activity } = await getActivityData();
+    const { sleep } = await getSleepData();
+    return res.status(200).json({ activity, sleep });
   } catch (error) {
     if (error instanceof Error) {
       console.error(error.message);
@@ -78,24 +80,26 @@ export default async function (
   }
 }
 
+const getDates = () => {
+  const today = new Date();
+  const yesterday = startOfWeek(subDays(today, 1));
+
+  const start = format(yesterday, "yyyy-MM-dd");
+  const end = format(today, "yyyy-MM-dd");
+  return { start, end };
+};
+
 export const getActivityData = async () => {
-  const { activity } = await fetcher("activity");
-  return activity;
+  const { start, end } = getDates();
+  const { activity } = await fetcher(`activity?start=${start}&end=${end}`);
+  const sorted = sortBy(activity, "summary_date").reverse();
+  return { start, end, activity: sorted };
 };
 
 export const getSleepData = async () => {
-  const today = new Date();
-  const startDate = new Date();
-  const yesterday = startOfWeek(subDays(startDate, 1));
-  const start = format(startDate, "yyyy-MM-dd");
-  const end = format(yesterday, "yyyy-MM-dd");
-
-  const { sleep } = await fetcher(`sleep?start=${yesterday}&end=${today}`);
-  const sorted = sleep.sort((a: SleepData, b: SleepData) => {
-    const aD = new Date(a.summary_date).getTime();
-    const bD = new Date(b.summary_date).getTime();
-    return bD - aD;
-  });
+  const { start, end } = getDates();
+  const { sleep } = await fetcher(`sleep?start=${start}&end=${end}`);
+  const sorted = sortBy(sleep, "summary_date").reverse();
 
   return { start, end, sleep: sorted };
 };
