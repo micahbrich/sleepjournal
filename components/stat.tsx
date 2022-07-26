@@ -1,4 +1,4 @@
-import { SleepData } from "pages/api/sleep";
+import { SleepData } from "pages/api/oura";
 import { DateTime, Duration } from "luxon";
 
 interface DayStatsProps extends SleepData {

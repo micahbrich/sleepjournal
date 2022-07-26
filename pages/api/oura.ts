@@ -1,6 +1,13 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { ApiError } from "next/dist/server/api-utils";
-import { format, startOfWeek, endOfWeek, subWeeks, subDays } from "date-fns";
+import {
+  format,
+  startOfWeek,
+  endOfWeek,
+  subWeeks,
+  subDays,
+  addDays,
+} from "date-fns";
 import { sortBy } from "lodash";
 
 const access_token = process.env.OURA_TOKEN;
@@ -17,14 +24,15 @@ const fetcher = (path: string, ...args: any) =>
 
 interface APIResponse {
   activity?: any;
-  sleep?: SleepData[] | undefined;
-  start?: string;
-  end?: string;
-  error?: string | undefined;
+  sleep?: SleepData[] | null;
+  start?: string | null;
+  end?: string | null;
+  error?: string | null;
 }
 
 export interface SleepData {
   error?: string;
+  query?: string;
   summary_date: string;
   period_id: number;
   is_longest: number;
@@ -69,9 +77,10 @@ export default async function (
   res: NextApiResponse<APIResponse>
 ) {
   try {
-    const { activity } = await getActivityData();
-    const { sleep } = await getSleepData();
-    return res.status(200).json({ activity, sleep });
+    const { start, end } = getDates();
+    const { activity } = await getActivityData(start, end);
+    const { sleep } = await getSleepData(start, end);
+    return res.status(200).json({ start, end, sleep, activity });
   } catch (error) {
     if (error instanceof Error) {
       console.error(error.message);
@@ -82,23 +91,37 @@ export default async function (
 
 const getDates = () => {
   const today = new Date();
+  const tomorrow = addDays(today, 1);
   const yesterday = startOfWeek(subDays(today, 1));
 
   const start = format(yesterday, "yyyy-MM-dd");
-  const end = format(today, "yyyy-MM-dd");
+  const end = format(tomorrow, "yyyy-MM-dd");
   return { start, end };
 };
 
-export const getActivityData = async () => {
-  const { start, end } = getDates();
-  const { activity } = await fetcher(`activity?start=${start}&end=${end}`);
+export const getActivityData = async (start?: string, end?: string) => {
+  const dates = getDates();
+  let options = {
+    start: start || dates.start,
+    end: end || dates.end,
+  } as any;
+  const query = new URLSearchParams(options).toString();
+
+  const { activity } = await fetcher(`activity?${query}`);
   const sorted = sortBy(activity, "summary_date").reverse();
+
   return { start, end, activity: sorted };
 };
 
-export const getSleepData = async () => {
-  const { start, end } = getDates();
-  const { sleep } = await fetcher(`sleep?start=${start}&end=${end}`);
+export const getSleepData = async (start?: string, end?: string) => {
+  const dates = getDates();
+  let options = {
+    start: start || dates.start,
+    end: end || dates.end,
+  } as any;
+  const query = new URLSearchParams(options).toString();
+
+  const { sleep } = await fetcher(`sleep?${query}`);
   const sorted = sortBy(sleep, "summary_date").reverse();
 
   return { start, end, sleep: sorted };
