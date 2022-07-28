@@ -1,5 +1,6 @@
 import { GetStaticProps } from "next";
 import { DayStats } from "components/stat";
+import Day from "components/Day";
 import Head from "next/head";
 import useSWR, { SWRConfig } from "swr";
 import { SleepData, getSleepData } from "./api/oura";
@@ -9,19 +10,27 @@ const fetcher = (url, ...args) => fetch(url, ...args).then((res) => res.json());
 const Home = ({ fallback }) => {
   const { data, error } = useSWR("/api/oura", fetcher);
 
+  if (!data && !error)
+    return (
+      <div className="p-4 flex justify-center items-center min-h-screen min-w-screen">
+        Loading...
+      </div>
+    );
+  if (error) return <div>{error}</div>;
+
+  const { today } = data;
+
   return (
     <SWRConfig value={{ fallback }}>
-      <div>
+      <>
         <Head>
           <title>Sleep Journal</title>
           <meta name="viewport" content="width=device-width, initial-scale=1" />
         </Head>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 p-2">
-          {data?.sleep?.map((data, index) => (
-            <DayStats {...data} index={index} />
-          ))}
+        <div className="p-4 flex flex-col justify-center items-center min-w-full min-h-screen">
+          <Day {...today} />
         </div>
-      </div>
+      </>
     </SWRConfig>
   );
 };

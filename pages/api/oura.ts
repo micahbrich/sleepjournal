@@ -24,6 +24,7 @@ const fetcher = (path: string, ...args: any) =>
 
 interface APIResponse {
   activity?: any;
+  today?: SleepData;
   sleep?: SleepData[] | null;
   start?: string | null;
   end?: string | null;
@@ -80,7 +81,8 @@ export default async function (
     const { start, end } = getDates();
     const { activity } = await getActivityData(start, end);
     const { sleep } = await getSleepData(start, end);
-    return res.status(200).json({ start, end, sleep, activity });
+    const [today] = sleep;
+    return res.status(200).json({ start, end, today, sleep, activity });
   } catch (error) {
     if (error instanceof Error) {
       console.error(error.message);
