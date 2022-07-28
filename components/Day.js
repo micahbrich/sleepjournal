@@ -163,7 +163,7 @@ const Input = (props) => (
     <input
       type="datetime-local"
       pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}"
-      className="block rounded font-mono text-xs"
+      className="block rounded font-mono text-xs appearance-none"
       {...props}
     />
   </Answer>

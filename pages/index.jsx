@@ -25,7 +25,7 @@ const Home = ({ fallback }) => {
           <title>Sleep Journal</title>
           <meta name="viewport" content="width=device-width, initial-scale=1" />
         </Head>
-        <div className="p-4 flex flex-col justify-center items-center min-w-full min-h-screen">
+        <div className="p-4 md:flex md:flex-col justify-center items-center min-w-full min-h-screen">
           <Day {...today} />
         </div>
       </>
