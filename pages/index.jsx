@@ -1,9 +1,7 @@
-import { GetStaticProps } from "next";
-import { DayStats } from "components/stat";
 import Day from "components/Day";
 import Head from "next/head";
 import useSWR, { SWRConfig } from "swr";
-import { SleepData, getSleepData } from "./api/oura";
+import { getSleepData } from "./api/oura";
 
 const fetcher = (url, ...args) => fetch(url, ...args).then((res) => res.json());
 
