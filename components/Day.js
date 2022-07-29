@@ -22,25 +22,26 @@ const Day = (today) => {
       Duration.fromObject({ seconds: newData.onset_latency })
     );
 
-    const start = DateTime.fromISO(newData.revised_bedtime_start);
-    const end = DateTime.fromISO(newData.bedtime_start);
-
-    const bedtime_start_diff = end.diff(start, ["hours", "minutes"]).toObject();
-
     const time_awake = Duration.fromObject({
       seconds: newData.awake,
     }).shiftTo("hours", "minutes");
 
-    const revised_time_awake = Duration.fromObject({
-      ...bedtime_start_diff,
-    }).shiftTo("hours", "minutes");
+    const start = DateTime.fromISO(newData.revised_bedtime_start);
+    const end = DateTime.fromISO(newData.bedtime_start);
+    const bedtime_start_diff = end.diff(start).toObject();
 
-    const total_time_awake = time_awake.plus(revised_time_awake);
+    const revised_time_awake = Duration.fromObject(bedtime_start_diff).shiftTo(
+      "hours",
+      "minutes"
+    );
+
+    const total_time_awake = time_awake
+      .plus(revised_time_awake)
+      .shiftTo("hours", "minutes");
     const total_time_in_bed = Duration.fromObject(
       DateTime.fromISO(data?.out_of_bed_time || data.bedtime_end)
         .diff(
-          DateTime.fromISO(data?.revised_bedtime_start || data.bedtime_start),
-          "seconds"
+          DateTime.fromISO(data?.revised_bedtime_start || data.bedtime_start)
         )
         .toObject()
     ).shiftTo("hours", "minutes");
@@ -59,7 +60,9 @@ const Day = (today) => {
       revised_time_awake: revised_time_awake.toHuman({
         unitDisplay: "narrow",
       }),
-      total_time_awake: total_time_awake.toHuman({ unitDisplay: "narrow" }),
+      total_time_awake: total_time_awake.toHuman({
+        unitDisplay: "narrow",
+      }),
       bedtime_start_diff,
       total_time_in_bed: total_time_in_bed.toHuman({ unitDisplay: "narrow" }),
       total_time_asleep: total_time_asleep.toHuman({ unitDisplay: "narrow" }),
